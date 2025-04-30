@@ -92,13 +92,26 @@ const Navbar: React.FC = () => {
               Öne Çıkanlar
             </Link>
             {isLoggedIn ? (
-              <button
-                onClick={handleLogout}
-                className="text-lg font-medium text-red-600 hover:text-red-800"
-                aria-label="Hesabınızdan çıkış yapın"
-              >
-                Çıkış Yap
-              </button>
+              <>
+                <Link
+                  to="/dashboard"
+                  className={`text-lg font-medium ${
+                    isScrolled || !isHomePage
+                      ? 'text-gray-700 hover:text-blue-600'
+                      : 'text-white hover:text-blue-200'
+                  }`}
+                  aria-label="Hesabınızı yönetin"
+                >
+                  Hesabım
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-lg font-medium text-red-600 hover:text-red-800"
+                  aria-label="Hesabınızdan çıkış yapın"
+                >
+                  Çıkış Yap
+                </button>
+              </>
             ) : (
               <>
                 <Link
@@ -165,15 +178,24 @@ const Navbar: React.FC = () => {
               Öne Çıkanlar
             </Link>
             {isLoggedIn ? (
-              <button
-                onClick={() => {
-                  handleLogout();
-                  setIsMenuOpen(false);
-                }}
-                className="block py-2 text-lg font-medium text-red-600"
-              >
-                Çıkış Yap
-              </button>
+              <>
+                <Link
+                  to="/dashboard"
+                  className="block py-2 text-lg font-medium text-gray-700"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Hesabım
+                </Link>
+                <button
+                  onClick={() => {
+                    handleLogout();
+                    setIsMenuOpen(false);
+                  }}
+                  className="block py-2 text-lg font-medium text-red-600"
+                >
+                  Çıkış Yap
+                </button>
+              </>
             ) : (
               <>
                 <Link

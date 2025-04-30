@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { MapPin, Star, Users, Calendar, Coffee, Wifi, Car, Utensils, Dumbbell, Space as Spa, School as Pool, Check, ChevronsRight, ChevronLeft, ChevronRight } from 'lucide-react';
+import { MapPin, Star, Users, Calendar, Coffee, Wifi, Car, Utensils, Dumbbell, Space as Spa, School as Pool, Check, ChevronsRight, ChevronLeft, ChevronRight, Bookmark, CreditCard } from 'lucide-react';
+import { authService } from '../services/authService';
 
 interface Hotel {
-  id: number;
+  id: string;
   name: string;
   location: string;
   description: string;
@@ -31,13 +32,27 @@ interface Hotel {
     lat: number;
     lng: number;
   };
+  rooms: Room[];
+}
+
+interface Room {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  capacity: number;
+  amenities: string[];
 }
 
 const HotelDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [hotel, setHotel] = useState<Hotel | null>(null);
+  const [isSaved, setIsSaved] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState<string>('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const currentUser = authService.getCurrentUser();
   const [activeTab, setActiveTab] = useState('about');
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [checkIn, setCheckIn] = useState('');
@@ -45,102 +60,123 @@ const HotelDetailPage: React.FC = () => {
   const [guests, setGuests] = useState('2');
   
   useEffect(() => {
-    // Simulated API call to get hotel details
-    setTimeout(() => {
-      // This would be replaced with a real API call using the ID parameter
-      const dummyHotel: Hotel = {
-        id: parseInt(id || '1'),
-        name: "Luxury Ocean Resort",
-        location: "Miami Beach, FL",
-        description: "Experience luxury at its finest with stunning ocean views and world-class amenities.",
-        longDescription: `
-          Welcome to Luxury Ocean Resort, where paradise meets luxury. Our beachfront property offers an unparalleled experience with breathtaking ocean views and world-class amenities.
-          
-          Nestled on the pristine shores of Miami Beach, our resort provides the perfect backdrop for a memorable vacation. Whether you're seeking relaxation or adventure, our resort caters to all your desires.
-          
-          Our spacious rooms and suites are elegantly designed with modern furnishings and premium bedding to ensure maximum comfort. Each accommodation features a private balcony, allowing you to savor the magnificent ocean views and gentle sea breeze.
-          
-          Indulge in culinary delights at our award-winning restaurants, offering a diverse range of international cuisines prepared by our talented chefs using the freshest ingredients. From casual beachside dining to fine dining experiences, we have something for every palate.
-          
-          Pamper yourself at our luxurious spa, which offers a variety of rejuvenating treatments designed to relax and revitalize your body and mind. Our state-of-the-art fitness center is equipped with the latest equipment for maintaining your workout routine, and our infinity pool provides a refreshing retreat with panoramic ocean views.
-        `,
-        images: [
-          "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          "https://images.pexels.com/photos/2869215/pexels-photo-2869215.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
-        ],
-        price: 299,
-        rating: 4.8,
-        reviews: [
-          {
-            id: 1,
-            user: "Emma Thompson",
-            avatar: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-            rating: 5,
-            date: "2023-06-15",
-            comment: "Absolutely stunning resort with exceptional service. The oceanfront view from our room was breathtaking! The staff went above and beyond to make our stay special. Will definitely return."
-          },
-          {
-            id: 2,
-            user: "Michael Johnson",
-            avatar: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-            rating: 4,
-            date: "2023-05-22",
-            comment: "Great location and beautiful facilities. The rooms are spacious and comfortable with amazing views. The only downside was the restaurant prices being quite high, but the food quality was excellent."
-          },
-          {
-            id: 3,
-            user: "Sophia Martinez",
-            avatar: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-            rating: 5,
-            date: "2023-04-08",
-            comment: "Perfect getaway destination! The beach access was convenient, and the pool area was perfect for relaxing. The spa services were top-notch, and the staff was friendly and attentive."
-          }
-        ],
-        amenities: [
-          { name: "Free WiFi", icon: "wifi" },
-          { name: "Parking", icon: "car" },
-          { name: "Restaurant", icon: "utensils" },
-          { name: "Fitness Center", icon: "dumbbell" },
-          { name: "Spa", icon: "spa" },
-          { name: "Swimming Pool", icon: "pool" },
-          { name: "Breakfast", icon: "coffee" },
-          { name: "Room Service", icon: "utensils" },
-          { name: "Beachfront", icon: "pool" },
-          { name: "Bar/Lounge", icon: "utensils" },
-          { name: "Air Conditioning", icon: "coffee" },
-          { name: "Concierge", icon: "coffee" }
-        ],
-        policies: [
-          {
-            title: "Check-in/Check-out",
-            details: "Check-in time is 3:00 PM. Check-out time is 11:00 AM. Early check-in and late check-out are available upon request and subject to availability."
-          },
-          {
-            title: "Cancellation Policy",
-            details: "Free cancellation up to 48 hours before check-in. Cancellations made within 48 hours of check-in are subject to a charge equivalent to one night's stay."
-          },
-          {
-            title: "Children Policy",
-            details: "Children of all ages are welcome. Children under 12 years stay free when using existing bedding. Cribs are available upon request."
-          },
-          {
-            title: "Pet Policy",
-            details: "Pets are not allowed, with the exception of service animals."
-          }
-        ],
-        mapLocation: {
-          lat: 25.7617,
-          lng: -80.1918
+    const checkIfHotelSaved = () => {
+      if (currentUser && currentUser.savedHotels) {
+        setIsSaved(currentUser.savedHotels.some(hotel => hotel.id === id));
+      }
+    };
+
+    // Burada normalde API'den otel detaylarını çekecektik
+    // Şimdilik örnek veri kullanıyoruz
+    setHotel({
+      id: id || '1',
+      name: "Luxury Ocean Resort",
+      location: "Miami, FL",
+      description: "Muhteşem okyanus manzaralı lüks resort otel",
+      longDescription: `
+        Welcome to Luxury Ocean Resort, where paradise meets luxury. Our beachfront property offers an unparalleled experience with breathtaking ocean views and world-class amenities.
+        
+        Nestled on the pristine shores of Miami Beach, our resort provides the perfect backdrop for a memorable vacation. Whether you're seeking relaxation or adventure, our resort caters to all your desires.
+        
+        Our spacious rooms and suites are elegantly designed with modern furnishings and premium bedding to ensure maximum comfort. Each accommodation features a private balcony, allowing you to savor the magnificent ocean views and gentle sea breeze.
+        
+        Indulge in culinary delights at our award-winning restaurants, offering a diverse range of international cuisines prepared by our talented chefs using the freshest ingredients. From casual beachside dining to fine dining experiences, we have something for every palate.
+        
+        Pamper yourself at our luxurious spa, which offers a variety of rejuvenating treatments designed to relax and revitalize your body and mind. Our state-of-the-art fitness center is equipped with the latest equipment for maintaining your workout routine, and our infinity pool provides a refreshing retreat with panoramic ocean views.
+      `,
+      images: [
+        "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        "https://images.pexels.com/photos/2869215/pexels-photo-2869215.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+        "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2"
+      ],
+      price: 299,
+      rating: 4.8,
+      reviews: [
+        {
+          id: 1,
+          user: "Emma Thompson",
+          avatar: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+          rating: 5,
+          date: "2023-06-15",
+          comment: "Absolutely stunning resort with exceptional service. The oceanfront view from our room was breathtaking! The staff went above and beyond to make our stay special. Will definitely return."
+        },
+        {
+          id: 2,
+          user: "Michael Johnson",
+          avatar: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+          rating: 4,
+          date: "2023-05-22",
+          comment: "Great location and beautiful facilities. The rooms are spacious and comfortable with amazing views. The only downside was the restaurant prices being quite high, but the food quality was excellent."
+        },
+        {
+          id: 3,
+          user: "Sophia Martinez",
+          avatar: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
+          rating: 5,
+          date: "2023-04-08",
+          comment: "Perfect getaway destination! The beach access was convenient, and the pool area was perfect for relaxing. The spa services were top-notch, and the staff was friendly and attentive."
         }
-      };
-      
-      setHotel(dummyHotel);
-      setLoading(false);
-    }, 1000);
-  }, [id]);
+      ],
+      amenities: [
+        { name: "Free WiFi", icon: "wifi" },
+        { name: "Parking", icon: "car" },
+        { name: "Restaurant", icon: "utensils" },
+        { name: "Fitness Center", icon: "dumbbell" },
+        { name: "Spa", icon: "spa" },
+        { name: "Swimming Pool", icon: "pool" },
+        { name: "Breakfast", icon: "coffee" },
+        { name: "Room Service", icon: "utensils" },
+        { name: "Beachfront", icon: "pool" },
+        { name: "Bar/Lounge", icon: "utensils" },
+        { name: "Air Conditioning", icon: "coffee" },
+        { name: "Concierge", icon: "coffee" }
+      ],
+      policies: [
+        {
+          title: "Check-in/Check-out",
+          details: "Check-in time is 3:00 PM. Check-out time is 11:00 AM. Early check-in and late check-out are available upon request and subject to availability."
+        },
+        {
+          title: "Cancellation Policy",
+          details: "Free cancellation up to 48 hours before check-in. Cancellations made within 48 hours of check-in are subject to a charge equivalent to one night's stay."
+        },
+        {
+          title: "Children Policy",
+          details: "Children of all ages are welcome. Children under 12 years stay free when using existing bedding. Cribs are available upon request."
+        },
+        {
+          title: "Pet Policy",
+          details: "Pets are not allowed, with the exception of service animals."
+        }
+      ],
+      mapLocation: {
+        lat: 25.7617,
+        lng: -80.1918
+      },
+      rooms: [
+        {
+          id: "room1",
+          name: "Deluxe Okyanus Manzaralı Oda",
+          description: "King yatak ve özel balkonlu oda",
+          price: 299,
+          capacity: 2,
+          amenities: ["Balkon", "Mini bar", "Klima"]
+        },
+        {
+          id: "room2",
+          name: "Suite Oda",
+          description: "Geniş yaşam alanlı süit",
+          price: 499,
+          capacity: 4,
+          amenities: ["Oturma odası", "Jakuzi", "Mutfak"]
+        }
+      ]
+    });
+    setLoading(false);
+    checkIfHotelSaved();
+  }, [id, currentUser]);
   
   const getAmenityIcon = (iconName: string) => {
     switch (iconName) {
@@ -188,6 +224,55 @@ const HotelDetailPage: React.FC = () => {
     }
   };
   
+  const handleSaveHotel = async () => {
+    try {
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+
+      if (!hotel) return;
+
+      await authService.toggleSavedHotel(currentUser.id, hotel.id);
+      setIsSaved(!isSaved);
+      
+      if (!isSaved) {
+        alert('Otel favorilerinize eklendi!');
+      } else {
+        alert('Otel favorilerinizden kaldırıldı!');
+      }
+    } catch (err: any) {
+      setError(err.message || 'Otel kaydedilirken bir hata oluştu');
+    }
+  };
+
+  const handleReservation = async () => {
+    try {
+      if (!currentUser) {
+        navigate('/login');
+        return;
+      }
+
+      if (!selectedRoom || !hotel) {
+        alert('Lütfen bir oda seçin');
+        return;
+      }
+
+      // Ödeme sayfasına yönlendir
+      navigate(`/payment`, {
+        state: {
+          hotelId: hotel.id,
+          hotelName: hotel.name,
+          roomId: selectedRoom,
+          roomName: hotel.rooms.find(r => r.id === selectedRoom)?.name,
+          price: hotel.rooms.find(r => r.id === selectedRoom)?.price
+        }
+      });
+    } catch (err: any) {
+      setError(err.message || 'Rezervasyon yapılırken bir hata oluştu');
+    }
+  };
+  
   if (loading) {
     return (
       <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
@@ -216,6 +301,12 @@ const HotelDetailPage: React.FC = () => {
   return (
     <div className="min-h-screen pt-24 pb-16 bg-gray-50">
       <div className="container mx-auto px-4">
+        {error && (
+          <div className="mb-4 p-4 bg-red-100 text-red-700 rounded-lg">
+            {error}
+          </div>
+        )}
+
         {/* Image Gallery */}
         <div className="relative mb-8 rounded-xl overflow-hidden shadow-lg" aria-label="Hotel image gallery">
           <div className="relative h-96">
@@ -255,6 +346,14 @@ const HotelDetailPage: React.FC = () => {
               ))}
             </div>
           </div>
+          <button
+            onClick={handleSaveHotel}
+            className={`absolute top-4 right-4 p-3 rounded-full ${
+              isSaved ? 'bg-blue-600 text-white' : 'bg-white text-blue-600'
+            } shadow-lg hover:scale-105 transition-transform`}
+          >
+            <Bookmark size={24} fill={isSaved ? 'currentColor' : 'none'} />
+          </button>
         </div>
         
         <div className="flex flex-col lg:flex-row gap-8">
