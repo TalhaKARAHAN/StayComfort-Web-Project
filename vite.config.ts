@@ -11,4 +11,15 @@ export default defineConfig({
     host: '127.0.0.1', // Custom localhost
     port: 3000, // Custom port
   },
+  build: {
+    outDir: 'dist',
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          vendor: ['react', 'react-dom', 'react-router-dom'],
+        },
+      },
+    },
+  },
 });
