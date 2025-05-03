@@ -7,7 +7,7 @@ const KullanimSartlari: React.FC = () => {
       title: "Genel Hükümler",
       icon: <Shield className="w-6 h-6" />,
       content: [
-        "Bu kullanım şartları, StayComfort.com web sitesini kullanımınızı düzenleyen yasal bir anlaşmadır.",
+        "Bu kullanım şartları, odamhazir.com web sitesini kullanımınızı düzenleyen yasal bir anlaşmadır.",
         "Siteyi kullanarak bu şartları kabul etmiş sayılırsınız.",
         "Şartlarda yapılacak değişiklikler, sitede yayınlandığı tarihte yürürlüğe girer.",
         "Şartları kabul etmiyorsanız, lütfen sitemizi kullanmayınız."
@@ -84,7 +84,7 @@ const KullanimSartlari: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-8 mb-8">
             <div className="prose max-w-none">
               <p className="text-gray-700 mb-6">
-                StayComfort.com'u kullanmadan önce lütfen bu kullanım şartlarını dikkatlice okuyunuz. 
+                odamhazir.com'u kullanmadan önce lütfen bu kullanım şartlarını dikkatlice okuyunuz. 
                 Sitemizi kullanarak bu şartları kabul etmiş sayılırsınız. Şartları kabul etmiyorsanız, 
                 lütfen sitemizi kullanmayınız.
               </p>

@@ -85,7 +85,7 @@ const GizlilikPolitikasi: React.FC = () => {
           <div className="bg-white rounded-lg shadow-md p-8 mb-8">
             <div className="prose max-w-none">
               <p className="text-gray-700 mb-6">
-                StayComfort.com olarak kişisel verilerinizin güvenliği bizim için önemlidir. 
+                odamhazir.com olarak kişisel verilerinizin güvenliği bizim için önemlidir. 
                 Bu gizlilik politikası, hangi verilerinizi nasıl topladığımızı, kullandığımızı 
                 ve koruduğumuzu açıklar. Sitemizi kullanarak bu politikayı kabul etmiş sayılırsınız.
               </p>
@@ -123,7 +123,7 @@ const GizlilikPolitikasi: React.FC = () => {
                 </p>
                 <div className="space-y-2">
                   <p className="text-gray-700">
-                    <strong>E-posta:</strong> kvkk@staycomfort.com
+                    <strong>E-posta:</strong> kvkk@odamhazir.com
                   </p>
                   <p className="text-gray-700">
                     <strong>Telefon:</strong> +90 (212) 123 45 67

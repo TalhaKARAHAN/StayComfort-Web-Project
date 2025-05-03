@@ -63,7 +63,7 @@ const Navbar: React.FC = () => {
                 isScrolled || !isHomePage ? 'text-gray-900' : 'text-white'
               }`}
             >
-              StayComfort
+              Odam Hazır
             </span>
           </Link>
 

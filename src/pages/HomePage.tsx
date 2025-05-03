@@ -180,17 +180,17 @@ const HomePage: React.FC = () => {
               {
                 name: "Emma Thompson",
                 photo: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                text: "StayComfort otel bulmayı ve rezervasyon yapmayı çok kolay hale getirdi. Fiyatlar diğer sitelere göre daha iyiydi ve rezervasyonumu değiştirmem gerektiğinde müşteri hizmetleri mükemmeldi."
+                text: "Odam Hazır otel bulmayı ve rezervasyon yapmayı çok kolay hale getirdi. Fiyatlar diğer sitelere göre daha iyiydi ve rezervasyonumu değiştirmem gerektiğinde müşteri hizmetleri mükemmeldi."
               },
               {
                 name: "Michael Johnson",
                 photo: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                text: "StayComfort'u hem iş hem de tatil seyahatlerim için kullandım. Arayüz temiz ve sezgisel, filtreleme ve tam olarak ihtiyacım olanı bulmayı kolaylaştırıyor. Şiddetle tavsiye ederim!"
+                text: "Odam Hazır'ı hem iş hem de tatil seyahatlerim için kullandım. Arayüz temiz ve sezgisel, filtreleme ve tam olarak ihtiyacım olanı bulmayı kolaylaştırıyor. Şiddetle tavsiye ederim!"
               },
               {
                 name: "Sophia Martinez",
                 photo: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                text: "Ücretsiz iptal seçeneği, belirsiz zamanlarda rezervasyon yaparken bana huzur verdi. Ve iptal etmem gerektiğinde, süreç sorunsuzdu. StayComfort'u kesinlikle tekrar kullanacağım."
+                text: "Ücretsiz iptal seçeneği, belirsiz zamanlarda rezervasyon yaparken bana huzur verdi. Ve iptal etmem gerektiğinde, süreç sorunsuzdu. Odam Hazır'ı kesinlikle tekrar kullanacağım."
               }
             ].map((testimonial, index) => (
               <div key={index} className="bg-white p-8 rounded-lg shadow-md">

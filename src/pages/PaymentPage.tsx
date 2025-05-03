@@ -116,7 +116,7 @@ const PaymentPage: React.FC = () => {
       // Başarılı ödeme
       setPaymentStatus({
         success: true,
-        message: 'Ödemeniz başarıyla tamamlandı. Rezervasyon detaylarınız email adresinize gönderilecektir.'
+        message: 'Ödemeniz başarıyla tamamlandı. Rezervasyon detaylarınız Odam Hazır tarafından email adresinize gönderilecektir.'
       });
       setIsPopupOpen(true);
     } catch (error) {

@@ -144,8 +144,8 @@ const YardimMerkezi: React.FC = () => {
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">7/24 Destek Hattı</h3>
                   <p className="text-gray-600 mb-1">Hemen Arayın</p>
-                  <a href="tel:+1555123-4567" className="text-blue-600 hover:text-blue-700 font-medium">
-                    +1 (555) 123-4567
+                  <a href="tel:+905515553852" className="text-blue-600 hover:text-blue-700 font-medium">
+                    +90 (551) 555-3852
                   </a>
                 </div>
               </div>
@@ -155,8 +155,8 @@ const YardimMerkezi: React.FC = () => {
                 <div>
                   <h3 className="font-medium text-gray-900 mb-1">E-posta Desteği</h3>
                   <p className="text-gray-600 mb-1">24 Saat İçinde Yanıt</p>
-                  <a href="mailto:support@staycomfort.com" className="text-blue-600 hover:text-blue-700 font-medium">
-                    support@staycomfort.com
+                  <a href="mailto:iletisim@odamhazir.com" className="text-blue-600 hover:text-blue-700 font-medium">
+                    iletisim@odamhazir.com
                   </a>
                 </div>
               </div>

@@ -53,7 +53,7 @@ const BizeUlasin: React.FC = () => {
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Telefon</h3>
               <p className="text-gray-600 mb-2">7/24 Müşteri Hizmetleri</p>
               <a href="tel:+1555123-4567" className="text-blue-600 hover:text-blue-700">
-                +1 (555) 123-4567
+                +90 (551) 555-3852
               </a>
             </div>
 
@@ -61,8 +61,8 @@ const BizeUlasin: React.FC = () => {
               <Mail className="text-blue-600 mb-4" size={24} />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">E-posta</h3>
               <p className="text-gray-600 mb-2">24 saat içinde yanıt</p>
-              <a href="mailto:support@staycomfort.com" className="text-blue-600 hover:text-blue-700">
-                support@staycomfort.com
+              <a href="mailto:destek@odamhazir.com" className="text-blue-600 hover:text-blue-700">
+                destek@odamhazir.com
               </a>
             </div>
 
@@ -70,8 +70,8 @@ const BizeUlasin: React.FC = () => {
               <MapPin className="text-blue-600 mb-4" size={24} />
               <h3 className="text-xl font-semibold text-gray-900 mb-2">Adres</h3>
               <p className="text-gray-600">
-                123 Hotel Street<br />
-                City, Country
+                <br />
+                İstanbul Maltepe
               </p>
             </div>
           </div>

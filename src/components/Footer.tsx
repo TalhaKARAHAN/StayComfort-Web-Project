@@ -10,25 +10,25 @@ const Footer: React.FC = () => {
     {
       name: 'Facebook',
       icon: <Facebook size={24} />,
-      url: 'https://facebook.com/staycomfort',
+      url: 'https://facebook.com/odamhazir',
       color: 'hover:text-[#1877F2]'
     },
     {
       name: 'Twitter',
       icon: <Twitter size={24} />,
-      url: 'https://twitter.com/staycomfort',
+      url: 'https://twitter.com/odamhazir',
       color: 'hover:text-[#1DA1F2]'
     },
     {
       name: 'Instagram',
       icon: <Instagram size={24} />,
-      url: 'https://instagram.com/staycomfort',
+      url: 'https://instagram.com/odamhazir',
       color: 'hover:text-[#E4405F]'
     },
     {
       name: 'Youtube',
       icon: <Youtube size={24} />,
-      url: 'https://youtube.com/staycomfort',
+      url: 'https://youtube.com/odamhazir',
       color: 'hover:text-[#FF0000]'
     }
   ];
@@ -58,10 +58,10 @@ const Footer: React.FC = () => {
                   <path d="M3 12h18M3 6h18M3 18h18" />
                 </svg>
               </div>
-              <span className="text-xl font-bold">StayComfort</span>
+              <span className="text-xl font-bold">Odam Hazır</span>
             </div>
             <p className="text-gray-400 mb-4">
-              Mükemmel konaklamanızı StayComfort ile bulun. Dünyanın en iyi otel fırsatlarını sunuyoruz.
+              Mükemmel konaklamanızı Odam Hazır ile bulun. Türkiye'nin en iyi otel fırsatlarını sunuyoruz.
             </p>
             <div className="flex items-center text-gray-400 mb-2">
               <Phone size={18} className="mr-2" />
@@ -69,7 +69,7 @@ const Footer: React.FC = () => {
               </div>
             <div className="flex items-center text-gray-400 mb-2">
               <Mail size={18} className="mr-2" />
-              <a href="mailto:contact@staycomfort.com" className="hover:text-white transition">contact@staycomfort.com</a>
+              <a href="mailto:contact@odamhazir.com" className="hover:text-white transition">contact@odamhazir.com</a>
               </div>
             <div className="flex items-center text-gray-400">
               <MapPin size={18} className="mr-2" />
@@ -149,7 +149,7 @@ const Footer: React.FC = () => {
         <div className="mt-12 pt-8 border-t border-gray-800">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="text-gray-400 mb-4 md:mb-0">
-              © {new Date().getFullYear()} StayComfort. Tüm hakları saklıdır.
+              © {new Date().getFullYear()} Odam Hazır. Tüm hakları saklıdır.
             </div>
             <div className="flex space-x-6">
               {socialLinks.map((social, index) => (
