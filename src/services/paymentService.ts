@@ -8,6 +8,25 @@ interface Payment {
   timestamp: string;
 }
 
+interface PaymentDetails {
+  userId: string;
+  amount: number;
+  paymentMethodId: string;
+  bookingDetails: {
+    hotelId: string;
+    roomId: string;
+    checkIn: string;
+    checkOut: string;
+    guests: number;
+  };
+}
+
+interface PaymentResult {
+  success: boolean;
+  error?: string;
+  transactionId?: string;
+}
+
 export const paymentService = {
   // Ödeme oluşturma
   createPayment: (paymentData: Omit<Payment, 'id' | 'timestamp'>) => {
@@ -44,5 +63,27 @@ export const paymentService = {
   getPaymentDetails: (paymentId: string) => {
     const payments = JSON.parse(localStorage.getItem('payments') || '[]');
     return payments.find((p: Payment) => p.id === paymentId);
+  },
+
+  processPayment: async (details: PaymentDetails): Promise<PaymentResult> => {
+    try {
+      // Ödeme işlemi simülasyonu
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // Başarılı ödeme simülasyonu
+      const transactionId = `tx_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+      // Sadece ödeme işlemini simüle et, rezervasyon ekleme!
+      return {
+        success: true,
+        transactionId
+      };
+    } catch (error: any) {
+      console.error('Ödeme işlemi sırasında hata:', error);
+      return {
+        success: false,
+        error: error.message || 'Ödeme işlemi sırasında bir hata oluştu'
+      };
+    }
   }
 }; 

@@ -90,8 +90,8 @@ const RegisterPage: React.FC = () => {
       });
       
       navigate('/login');
-    } catch (err) {
-      setError('Kayıt işlemi başarısız oldu');
+    } catch (err: any) {
+      setError(err.message || 'Kayıt işlemi başarısız oldu. Lütfen bilgilerinizi kontrol edin.');
     }
   };
   
@@ -189,6 +189,8 @@ const RegisterPage: React.FC = () => {
                       className="input-field pl-10"
                       placeholder="05XX XXX XX XX"
                       required
+                      pattern="[0-9]{10}"
+                      title="Lütfen 10 haneli geçerli bir telefon numarası girin (örn: 5XX XXX XX XX)"
                     />
                   </div>
                 </div>

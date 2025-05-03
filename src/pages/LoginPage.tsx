@@ -19,16 +19,20 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setError('');
     
-    const user = authService.login(email, password);
-    if (user) {
-      if (rememberMe) {
-        localStorage.setItem('rememberedUser', JSON.stringify({ email, password }));
+    try {
+      const user = authService.login(email, password);
+      if (user) {
+        if (rememberMe) {
+          localStorage.setItem('rememberedUser', JSON.stringify({ email, password }));
+        } else {
+          localStorage.removeItem('rememberedUser');
+        }
+        navigate('/dashboard');
       } else {
-        localStorage.removeItem('rememberedUser');
+        setError('Geçersiz e-posta veya şifre');
       }
-      navigate('/dashboard');
-    } else {
-      setError('Geçersiz e-posta veya şifre');
+    } catch (err: any) {
+      setError(err.message || 'Giriş yapılırken bir hata oluştu. Lütfen bilgilerinizi kontrol edin.');
     }
   };
   

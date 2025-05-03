@@ -1,4 +1,3 @@
-import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 // Pages
@@ -12,6 +11,11 @@ import RoomSelectionPage from './pages/RoomSelectionPage';
 import PaymentPage from './pages/PaymentPage';
 import ReservationSummaryPage from './pages/ReservationSummaryPage';
 import UserDashboardPage from './pages/UserDashboardPage';
+import SSS from './pages/support/SSS';
+import YardimMerkezi from './pages/support/YardimMerkezi';
+import BizeUlasin from './pages/support/BizeUlasin';
+import KullanimSartlari from './pages/support/KullanimSartlari';
+import GizlilikPolitikasi from './pages/support/GizlilikPolitikasi';
 
 // Components
 import Layout from './components/Layout';
@@ -31,6 +35,11 @@ function App() {
           <Route path="/payment" element={<PaymentPage />} />
           <Route path="/reservation-summary" element={<ReservationSummaryPage />} />
           <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/sss" element={<SSS />} />
+          <Route path="/yardim-merkezi" element={<YardimMerkezi />} />
+          <Route path="/bize-ulasin" element={<BizeUlasin />} />
+          <Route path="/kullanim-sartlari" element={<KullanimSartlari />} />
+          <Route path="/gizlilik-politikasi" element={<GizlilikPolitikasi />} />
         </Routes>
       </Layout>
     </Router>

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Users, Check, Star, Coffee, Wifi, Tv, Wind, Bath, Maximize2, Calendar } from 'lucide-react';
+import { hotelService } from '../services/hotelService';
+import { authService } from '../services/authService';
 
 interface Room {
-  id: number;
+  id: string;
   name: string;
   description: string;
   image: string;
@@ -16,7 +18,7 @@ interface Room {
 }
 
 interface Hotel {
-  id: number;
+  id: string;
   name: string;
   location: string;
   image: string;
@@ -27,88 +29,103 @@ const RoomSelectionPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
   const navigate = useNavigate();
-  const searchParams = new URLSearchParams(location.search);
   
-  // Get search parameters
-  const checkIn = searchParams.get('checkIn') || '';
-  const checkOut = searchParams.get('checkOut') || '';
-  const guests = searchParams.get('guests') || '2';
+  // Get dates from location state
+  const { state } = location;
+  const checkIn = state?.checkIn || '';
+  const checkOut = state?.checkOut || '';
+  const guests = state?.guests || '2';
   
   const [hotel, setHotel] = useState<Hotel | null>(null);
   const [rooms, setRooms] = useState<Room[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedRoom, setSelectedRoom] = useState<number | null>(null);
+  const [selectedRoom, setSelectedRoom] = useState<string | null>(null);
+  const [error, setError] = useState<string>('');
   
   useEffect(() => {
-    // Simulated API call to get hotel and room data
-    setTimeout(() => {
-      const dummyHotel: Hotel = {
-        id: parseInt(id || '1'),
-        name: "Luxury Ocean Resort",
-        location: "Miami Beach, FL",
-        image: "https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-        rating: 4.8
-      };
-      
-      const dummyRooms: Room[] = [
-        {
-          id: 1,
-          name: "Deluxe Ocean View Room",
-          description: "Spacious room with a king-size bed and stunning ocean views from a private balcony.",
-          image: "https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          price: 299,
-          capacity: 2,
-          size: 450,
-          bedType: "King",
-          amenities: ["Free WiFi", "Ocean View", "Air Conditioning", "Flat-screen TV", "Mini Bar", "Coffee Maker"],
-          available: true
-        },
-        {
-          id: 2,
-          name: "Premium Suite",
-          description: "Luxurious suite with separate living area, king-size bed, and panoramic ocean views.",
-          image: "https://images.pexels.com/photos/271643/pexels-photo-271643.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          price: 499,
-          capacity: 2,
-          size: 750,
-          bedType: "King",
-          amenities: ["Free WiFi", "Ocean View", "Air Conditioning", "Flat-screen TV", "Mini Bar", "Coffee Maker", "Separate Living Area", "Jacuzzi"],
-          available: true
-        },
-        {
-          id: 3,
-          name: "Standard Double Room",
-          description: "Comfortable room with two double beds, perfect for families or groups.",
-          image: "https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          price: 199,
-          capacity: 4,
-          size: 400,
-          bedType: "2 Double",
-          amenities: ["Free WiFi", "Air Conditioning", "Flat-screen TV", "Coffee Maker"],
-          available: true
-        },
-        {
-          id: 4,
-          name: "Family Suite",
-          description: "Spacious suite with two bedrooms, perfect for families with children.",
-          image: "https://images.pexels.com/photos/210265/pexels-photo-210265.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-          price: 399,
-          capacity: 4,
-          size: 850,
-          bedType: "1 King & 2 Twin",
-          amenities: ["Free WiFi", "Partial Ocean View", "Air Conditioning", "Flat-screen TV", "Mini Bar", "Coffee Maker", "Separate Living Area"],
-          available: true
+    const checkAuth = async () => {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser) {
+        navigate('/login', { 
+          state: { 
+            returnUrl: location.pathname,
+            checkIn,
+            checkOut,
+            guests 
+          } 
+        });
+        return;
+      }
+
+      if (!checkIn || !checkOut) {
+        navigate(`/hotels/${id}`, { replace: true });
+        return;
+      }
+
+      try {
+        setLoading(true);
+        const hotelData = hotelService.getHotelById(id || '');
+        if (hotelData) {
+          setHotel({
+            id: id || '1',
+            name: hotelData.name,
+            location: hotelData.location,
+            image: hotelData.images[0],
+            rating: hotelData.rating
+          });
+
+          const transformedRooms = hotelData.rooms.map(room => ({
+            id: room.id,
+            name: room.name,
+            description: room.description,
+            image: room.images[0],
+            price: room.price,
+            capacity: room.capacity,
+            size: room.size,
+            bedType: room.bedType,
+            amenities: room.amenities,
+            available: room.isAvailable
+          }));
+
+          setRooms(transformedRooms);
         }
-      ];
-      
-      setHotel(dummyHotel);
-      setRooms(dummyRooms);
-      setLoading(false);
-    }, 1000);
-  }, [id]);
+      } catch (err) {
+        setError('Otel bilgileri yüklenirken bir hata oluştu.');
+        console.error('Error fetching hotel data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [id, checkIn, checkOut, navigate, location.pathname]);
   
-  const handleRoomSelect = (roomId: number) => {
+  const handleRoomSelect = async (roomId: string) => {
+    try {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser) {
+        navigate('/login', { 
+          state: { 
+            returnUrl: location.pathname,
+            checkIn,
+            checkOut,
+            guests 
+          } 
+        });
+        return;
+      }
+      
     setSelectedRoom(roomId);
+      setError('');
+
+      const summaryElement = document.getElementById('reservation-summary');
+      if (summaryElement) {
+        summaryElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    } catch (err) {
+      setError('Oda seçimi yapılırken bir hata oluştu.');
+      console.error('Error selecting room:', err);
+    }
   };
   
   const getAmenityIcon = (amenity: string) => {
@@ -123,26 +140,96 @@ const RoomSelectionPage: React.FC = () => {
     return <Check size={20} />;
   };
   
-  const proceedToPayment = () => {
-    if (selectedRoom !== null) {
-      const selectedRoomData = rooms.find(room => room.id === selectedRoom);
-      
-      if (selectedRoomData) {
-        navigate('/payment', {
-          state: {
-            hotelId: id,
-            hotelName: hotel?.name,
-            hotelLocation: hotel?.location,
-            roomId: selectedRoom,
-            roomName: selectedRoomData.name,
-            roomImage: selectedRoomData.image,
-            price: selectedRoomData.price,
+  const getAmenityLabel = (amenity: string) => {
+    const translations: { [key: string]: string } = {
+      'Free WiFi': 'Ücretsiz WiFi',
+      'Ocean View': 'Deniz Manzarası',
+      'Air Conditioning': 'Klima',
+      'Flat-screen TV': 'Düz Ekran TV',
+      'Mini Bar': 'Mini Bar',
+      'Coffee Maker': 'Kahve Makinesi',
+      'Separate Living Area': 'Ayrı Oturma Alanı',
+      'Jacuzzi': 'Jakuzi',
+      'Room Service': 'Oda Servisi',
+      'wifi': 'Ücretsiz WiFi',
+      'minibar': 'Mini Bar',
+      'tv': 'Televizyon',
+      'safe': 'Kasa',
+      'aircon': 'Klima',
+      'balcony': 'Balkon',
+      'room-service': 'Oda Servisi'
+    };
+    return translations[amenity] || amenity;
+  };
+
+  const getBedTypeLabel = (bedType: string) => {
+    const translations: { [key: string]: string } = {
+      'King': 'King Size Yatak',
+      '2 Double': 'İki Kişilik İki Yatak',
+      '1 King & 2 Twin': 'Bir King Size ve İki Tek Kişilik Yatak',
+      'double': 'Çift Kişilik Yatak',
+      'king': 'King Size Yatak',
+      'twin': 'İki Tek Kişilik Yatak',
+      'single': 'Tek Kişilik Yatak'
+    };
+    return translations[bedType] || bedType;
+  };
+  
+  const proceedToPayment = async () => {
+    try {
+      const currentUser = authService.getCurrentUser();
+      if (!currentUser) {
+        navigate('/login', { 
+          state: { 
+            returnUrl: location.pathname,
             checkIn,
             checkOut,
-            guests
+            guests 
+          } 
+        });
+        return;
+      }
+
+      if (!checkIn || !checkOut) {
+        setError('Lütfen tarih seçimi yapın');
+        return;
+      }
+
+      if (!selectedRoom) {
+        setError('Lütfen bir oda seçin');
+        return;
+      }
+
+      const selectedRoomData = rooms.find(room => room.id === selectedRoom);
+      
+      if (!selectedRoomData) {
+        setError('Seçilen oda bulunamadı');
+        return;
+      }
+
+      if (!hotel) {
+        setError('Otel bilgisi bulunamadı');
+        return;
+      }
+
+      const pricePerNight = selectedRoomData.price;
+      const totalPrice = pricePerNight * nights;
+
+        navigate('/payment', {
+          state: {
+          bookingDetails: {
+            hotelId: hotel.id,
+            roomId: selectedRoom,
+            checkIn,
+            checkOut,
+            totalPrice,
+            guests: parseInt(guests)
+          }
           }
         });
-      }
+    } catch (err) {
+      setError('Ödeme sayfasına yönlendirilirken bir hata oluştu.');
+      console.error('Error proceeding to payment:', err);
     }
   };
   
@@ -164,7 +251,7 @@ const RoomSelectionPage: React.FC = () => {
       <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-opacity-50 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">Loading available rooms...</p>
+          <p className="text-xl text-gray-600">Odalar yükleniyor...</p>
         </div>
       </div>
     );
@@ -174,14 +261,13 @@ const RoomSelectionPage: React.FC = () => {
     return (
       <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600 mb-4">Hotel Not Found</h2>
-          <p className="text-lg text-gray-600 mb-6">We couldn't find the hotel you're looking for.</p>
+          <h2 className="text-2xl font-bold text-red-600 mb-4">Otel Bulunamadı</h2>
+          <p className="text-lg text-gray-600 mb-6">Aradığınız otel bulunamadı.</p>
           <button 
             onClick={() => navigate('/hotels')}
             className="btn btn-primary"
-            aria-label="Return to hotel search"
           >
-            Browse Hotels
+            Otellere Dön
           </button>
         </div>
       </div>
@@ -191,6 +277,12 @@ const RoomSelectionPage: React.FC = () => {
   return (
     <div className="min-h-screen pt-24 pb-16 bg-gray-50">
       <div className="container mx-auto px-4">
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mb-6">
+            {error}
+          </div>
+        )}
+
         {/* Hotel Info */}
         <div className="bg-white rounded-xl shadow-md p-6 mb-8">
           <div className="flex flex-col md:flex-row items-start md:items-center">
@@ -212,21 +304,23 @@ const RoomSelectionPage: React.FC = () => {
                 <Calendar size={18} className="mr-1" />
                 <span>
                   {checkIn && checkOut
-                    ? `${new Date(checkIn).toLocaleDateString()} - ${new Date(checkOut).toLocaleDateString()} · ${nights} ${nights > 1 ? 'nights' : 'night'}`
-                    : 'Dates not selected'}
+                    ? `${new Date(checkIn).toLocaleDateString('tr-TR')} - ${new Date(checkOut).toLocaleDateString('tr-TR')} · ${nights} ${nights > 1 ? 'gece' : 'gece'}`
+                    : 'Tarih seçilmedi'}
                 </span>
                 <span className="mx-2">•</span>
                 <Users size={18} className="mr-1" />
-                <span>{guests} {parseInt(guests) > 1 ? 'guests' : 'guest'}</span>
+                <span>{guests} {parseInt(guests) > 1 ? 'misafir' : 'misafir'}</span>
               </div>
             </div>
           </div>
         </div>
         
         <div className="mb-8">
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Select Your Room</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">Oda Seçimi</h2>
           <p className="text-lg text-gray-600">
-            Choose from our available rooms for your stay from {checkIn && new Date(checkIn).toLocaleDateString()} to {checkOut && new Date(checkOut).toLocaleDateString()}.
+            {checkIn && checkOut 
+              ? `${new Date(checkIn).toLocaleDateString('tr-TR')} - ${new Date(checkOut).toLocaleDateString('tr-TR')} tarihleri için müsait odalar.`
+              : 'Lütfen tarih seçimi yapın.'}
           </p>
         </div>
         
@@ -238,7 +332,6 @@ const RoomSelectionPage: React.FC = () => {
               className={`bg-white rounded-xl shadow-md overflow-hidden transition-all duration-300 ${
                 selectedRoom === room.id ? 'ring-2 ring-blue-500' : 'hover:shadow-lg'
               }`}
-              tabIndex={0}
             >
               <div className="md:flex">
                 <div className="md:w-1/3 h-64 md:h-auto relative">
@@ -256,31 +349,31 @@ const RoomSelectionPage: React.FC = () => {
                         <h3 className="text-xl md:text-2xl font-bold text-gray-900 mb-2">{room.name}</h3>
                         <div className="flex items-center mb-4">
                           <Users size={18} className="text-gray-500 mr-1" />
-                          <span className="text-gray-600 mr-4">Up to {room.capacity} guests</span>
+                          <span className="text-gray-600 mr-4">{room.capacity} misafire kadar</span>
                           <Maximize2 size={18} className="text-gray-500 mr-1" />
-                          <span className="text-gray-600">{room.size} sq ft</span>
+                          <span className="text-gray-600">{room.size} m²</span>
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-xl md:text-2xl font-bold text-blue-600">${room.price}</div>
-                        <div className="text-gray-500">per night</div>
+                        <div className="text-xl md:text-2xl font-bold text-blue-600">₺{room.price}</div>
+                        <div className="text-gray-500">gecelik</div>
                       </div>
                     </div>
                     
                     <p className="text-gray-600 mb-4">{room.description}</p>
                     
                     <div className="mb-4">
-                      <h4 className="text-lg font-medium text-gray-800 mb-2">Bed Type</h4>
-                      <p className="text-gray-600">{room.bedType}</p>
+                      <h4 className="text-lg font-medium text-gray-800 mb-2">Yatak Tipi</h4>
+                      <p className="text-gray-600">{getBedTypeLabel(room.bedType)}</p>
                     </div>
                     
                     <div>
-                      <h4 className="text-lg font-medium text-gray-800 mb-2">Room Amenities</h4>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                      <h4 className="text-lg font-medium text-gray-800 mb-2">Oda Özellikleri</h4>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-2">
                         {room.amenities.map((amenity, index) => (
                           <div key={index} className="flex items-center">
                             {getAmenityIcon(amenity)}
-                            <span className="ml-2 text-gray-600">{amenity}</span>
+                            <span className="ml-2 text-gray-600">{getAmenityLabel(amenity)}</span>
                           </div>
                         ))}
                       </div>
@@ -289,17 +382,14 @@ const RoomSelectionPage: React.FC = () => {
                   
                   <div className="mt-6 flex justify-end">
                     <button
-                      type="button"
                       onClick={() => handleRoomSelect(room.id)}
                       className={`px-6 py-3 rounded-lg font-medium transition-all duration-200 text-lg ${
                         selectedRoom === room.id
                           ? 'bg-green-600 text-white hover:bg-green-700'
                           : 'bg-blue-600 text-white hover:bg-blue-700'
                       }`}
-                      aria-label={`Select ${room.name}`}
-                      aria-pressed={selectedRoom === room.id}
                     >
-                      {selectedRoom === room.id ? 'Selected' : 'Select Room'}
+                      {selectedRoom === room.id ? 'Seçildi' : 'Odayı Seç'}
                     </button>
                   </div>
                 </div>
@@ -310,50 +400,48 @@ const RoomSelectionPage: React.FC = () => {
         
         {/* Price Summary and Reservation Button */}
         {selectedRoom !== null && (
-          <div className="bg-white rounded-xl shadow-md p-6 mb-8 animate-fadeIn">
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Reservation Summary</h3>
+          <div id="reservation-summary" className="bg-white rounded-xl shadow-md p-6 mb-8">
+            <h3 className="text-xl font-bold text-gray-900 mb-4">Rezervasyon Özeti</h3>
             
             <div className="space-y-3 mb-6">
               <div className="flex justify-between">
-                <div className="text-gray-600">Room:</div>
+                <div className="text-gray-600">Oda:</div>
                 <div className="font-medium">{rooms.find(r => r.id === selectedRoom)?.name}</div>
               </div>
               <div className="flex justify-between">
-                <div className="text-gray-600">Check-in:</div>
-                <div className="font-medium">{checkIn && new Date(checkIn).toLocaleDateString()}</div>
+                <div className="text-gray-600">Giriş:</div>
+                <div className="font-medium">{checkIn && new Date(checkIn).toLocaleDateString('tr-TR')}</div>
               </div>
               <div className="flex justify-between">
-                <div className="text-gray-600">Check-out:</div>
-                <div className="font-medium">{checkOut && new Date(checkOut).toLocaleDateString()}</div>
+                <div className="text-gray-600">Çıkış:</div>
+                <div className="font-medium">{checkOut && new Date(checkOut).toLocaleDateString('tr-TR')}</div>
               </div>
               <div className="flex justify-between">
-                <div className="text-gray-600">Duration:</div>
-                <div className="font-medium">{nights} {nights > 1 ? 'nights' : 'night'}</div>
+                <div className="text-gray-600">Süre:</div>
+                <div className="font-medium">{nights} {nights > 1 ? 'gece' : 'gece'}</div>
               </div>
               <div className="flex justify-between">
-                <div className="text-gray-600">Guests:</div>
-                <div className="font-medium">{guests}</div>
+                <div className="text-gray-600">Misafir:</div>
+                <div className="font-medium">{guests} {parseInt(guests) > 1 ? 'misafir' : 'misafir'}</div>
               </div>
               <div className="pt-3 border-t border-gray-200">
                 <div className="flex justify-between text-lg font-bold">
-                  <div>Total Price:</div>
+                  <div>Toplam Tutar:</div>
                   <div className="text-blue-600">
-                    ${(rooms.find(r => r.id === selectedRoom)?.price || 0) * nights}
+                    ₺{(rooms.find(r => r.id === selectedRoom)?.price || 0) * nights}
                   </div>
                 </div>
                 <div className="text-right text-gray-500 text-sm">
-                  ${rooms.find(r => r.id === selectedRoom)?.price} x {nights} {nights > 1 ? 'nights' : 'night'}
+                  ₺{rooms.find(r => r.id === selectedRoom)?.price} x {nights} {nights > 1 ? 'gece' : 'gece'}
                 </div>
               </div>
             </div>
             
             <button
-              type="button"
               onClick={proceedToPayment}
-              className="btn btn-primary w-full text-lg"
-              aria-label="Continue to payment"
+              className="w-full bg-blue-600 text-white py-4 rounded-lg font-medium text-lg hover:bg-blue-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
             >
-              Continue to Payment
+              Ödemeye Geç
             </button>
           </div>
         )}

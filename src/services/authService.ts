@@ -1,3 +1,8 @@
+import { User as UserType, PaymentMethod, Reservation } from '../types/user';
+import { BaseHotel } from '../types/hotel';
+import { updateUserSettings } from './userSettingsService';
+import { hotelService } from './hotelService';
+
 // Replace EventEmitter with a custom event system for browser compatibility
 const authEvents = {
   listeners: [] as Array<(isLoggedIn: boolean) => void>,
@@ -31,26 +36,6 @@ interface User {
   reservations?: Reservation[];
 }
 
-interface PaymentMethod {
-  id: string;
-  cardNumber: string;
-  cardHolder: string;
-  expiryDate: string;
-  isDefault: boolean;
-}
-
-interface Reservation {
-  id: string;
-  hotelName: string;
-  location: string;
-  roomName: string;
-  checkIn: string;
-  checkOut: string;
-  image: string;
-  price: number;
-  status: 'upcoming' | 'completed' | 'cancelled';
-}
-
 // Test kullanıcısı
 const TEST_USER: User = {
   id: '1',
@@ -63,37 +48,31 @@ const TEST_USER: User = {
   isEmailVerified: true,
   createdAt: new Date().toISOString(),
   lastLogin: new Date().toISOString(),
-  savedHotels: [],
+  savedHotels: ['hotel1', 'hotel2', 'hotel3'],
   paymentMethods: [],
-  reservations: [
-    {
-      id: 'RES123456',
-      hotelName: 'Luxury Ocean Resort',
-      location: 'Miami, FL',
-      roomName: 'Deluxe Ocean View Room',
-      checkIn: '2025-07-15',
-      checkOut: '2025-07-18',
-      image: 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg',
-      price: 299,
-      status: 'upcoming'
-    }
-  ]
+  reservations: []
 };
 
 // Kullanıcı state'ini senkronize tutmak için yardımcı fonksiyonlar
-const updateLocalStorage = (user: User) => {
-  localStorage.setItem('currentUser', JSON.stringify(user));
-  authEvents.emit('authChange', true);
-};
-
-const getLocalStorageUser = (): User | null => {
+const getUserFromStorage = (): User | null => {
   const userStr = localStorage.getItem('currentUser');
   if (!userStr) return null;
   try {
-    return JSON.parse(userStr);
+    const user = JSON.parse(userStr);
+    return {
+      ...user,
+      savedHotels: user.savedHotels || [],
+      paymentMethods: user.paymentMethods || [],
+      reservations: user.reservations || []
+    };
   } catch {
     return null;
   }
+};
+
+const updateUserInStorage = (user: User) => {
+  localStorage.setItem('currentUser', JSON.stringify(user));
+  authEvents.emit('authChange', true);
 };
 
 export const authService = {
@@ -110,13 +89,17 @@ export const authService = {
       const newUser = {
         ...userData,
         id: Date.now().toString(),
-        isEmailVerified: false,
+        isEmailVerified: true,
         createdAt: new Date().toISOString(),
         lastLogin: new Date().toISOString()
       };
 
       users.push(newUser);
       localStorage.setItem('users', JSON.stringify(users));
+      
+      // Kullanıcıyı otomatik olarak giriş yap
+      localStorage.setItem('currentUser', JSON.stringify(newUser));
+      authEvents.emit('authChange', true);
       
       // Email doğrulama gönderimi simülasyonu
       console.log('Email doğrulama bağlantısı gönderildi');
@@ -144,10 +127,6 @@ export const authService = {
         throw { code: 'INVALID_CREDENTIALS', message: 'Geçersiz email veya şifre' };
       }
 
-      if (!user.isEmailVerified) {
-        throw { code: 'EMAIL_NOT_VERIFIED', message: 'Lütfen email adresinizi doğrulayın' };
-      }
-
       // Son giriş zamanını güncelle
       user.lastLogin = new Date().toISOString();
       localStorage.setItem('users', JSON.stringify(users));
@@ -173,15 +152,25 @@ export const authService = {
   // Mevcut kullanıcıyı getirme
   getCurrentUser: () => {
     try {
-      const user = getLocalStorageUser();
+      const user = getUserFromStorage();
       if (!user) return null;
 
       // Test kullanıcısı için özel kontrol
       if (user.id === TEST_USER.id) {
-        return TEST_USER;
+        return {
+          ...TEST_USER,
+          savedHotels: TEST_USER.savedHotels || [],
+          paymentMethods: TEST_USER.paymentMethods || [],
+          reservations: TEST_USER.reservations || []
+        };
       }
 
-      return user;
+      return {
+        ...user,
+        savedHotels: user.savedHotels || [],
+        paymentMethods: user.paymentMethods || [],
+        reservations: user.reservations || []
+      };
     } catch (error) {
       console.error('Kullanıcı bilgileri alınırken bir hata oluştu:', error);
       return null;
@@ -196,16 +185,20 @@ export const authService = {
         throw { code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' };
       }
 
-      const updatedUser = { ...currentUser, ...userData };
-      
+      const updatedUser = {
+        ...currentUser,
+        ...userData,
+        reservations: userData.reservations !== undefined ? userData.reservations : currentUser.reservations
+      };
+
       // Test kullanıcısı için özel kontrol
       if (userId === TEST_USER.id) {
         Object.assign(TEST_USER, userData);
-        updateLocalStorage(TEST_USER);
+        updateUserInStorage(TEST_USER);
         return TEST_USER;
       }
 
-      updateLocalStorage(updatedUser);
+      updateUserInStorage(updatedUser);
       return updatedUser;
     } catch (error) {
       throw error;
@@ -236,26 +229,26 @@ export const authService = {
   },
 
   // Kullanıcı profil bilgilerini güncelleme
-  updateProfile: (userId: string, data: Partial<User>) => {
+  updateProfile: async (userId: string, data: Partial<User>) => {
     try {
-      const users = JSON.parse(localStorage.getItem('users') || '[]');
-      const userIndex = users.findIndex((u: User) => u.id === userId);
-      
-      if (userIndex === -1) {
-        throw { code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' };
+      const currentUser = await getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
       }
 
-      // Hassas bilgileri güncelleme dışında tut
-      const { password, isEmailVerified, createdAt, ...updateData } = data;
-      
-      users[userIndex] = { ...users[userIndex], ...updateData };
-      localStorage.setItem('users', JSON.stringify(users));
-      
-      if (users[userIndex].id === TEST_USER.id) {
-        Object.assign(TEST_USER, updateData);
+      // Test kullanıcısı için özel kontrol
+      if (userId === TEST_USER.id) {
+        const updatedUser = { ...TEST_USER, ...data };
+        await updateUserInStorage(updatedUser);
+        return updatedUser;
       }
 
-      return users[userIndex];
+      const updatedUser = await updateUserSettings(userId, data);
+      if (!updatedUser) {
+        throw new Error('Kullanıcı güncellenirken bir hata oluştu');
+      }
+
+      return updatedUser;
     } catch (error) {
       throw error;
     }
@@ -268,25 +261,21 @@ export const authService = {
       if (!currentUser) {
         throw { code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' };
       }
-
       if (!currentUser.savedHotels) {
         currentUser.savedHotels = [];
       }
-
       const hotelIndex = currentUser.savedHotels.indexOf(hotelId);
       if (hotelIndex === -1) {
         currentUser.savedHotels.push(hotelId);
       } else {
         currentUser.savedHotels.splice(hotelIndex, 1);
       }
-
       // Test kullanıcısı için özel kontrol
       if (userId === TEST_USER.id) {
         TEST_USER.savedHotels = currentUser.savedHotels;
-        updateLocalStorage(TEST_USER);
+        updateUserInStorage(TEST_USER);
         return TEST_USER.savedHotels;
       }
-
       // Normal kullanıcılar için localStorage güncelleme
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const userIndex = users.findIndex((u: User) => u.id === userId);
@@ -294,8 +283,7 @@ export const authService = {
         users[userIndex].savedHotels = currentUser.savedHotels;
         localStorage.setItem('users', JSON.stringify(users));
       }
-
-      updateLocalStorage(currentUser);
+      updateUserInStorage(currentUser);
       return currentUser.savedHotels;
     } catch (error) {
       throw error;
@@ -303,106 +291,152 @@ export const authService = {
   },
 
   // Ödeme yöntemi ekleme
-  addPaymentMethod: (userId: string, paymentMethod: Omit<PaymentMethod, 'id'>) => {
+  addPaymentMethod: async (userId: string, cardData: Omit<PaymentMethod, 'id'>): Promise<PaymentMethod> => {
     try {
-      const currentUser = authService.getCurrentUser();
-      if (!currentUser) {
-        throw { code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' };
+      const currentUser = getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
       }
+
+      const newCard: PaymentMethod = {
+        ...cardData,
+        id: `card_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
 
       if (!currentUser.paymentMethods) {
         currentUser.paymentMethods = [];
       }
 
-      const newPaymentMethod = {
-        ...paymentMethod,
-        id: Date.now().toString()
-      };
-
-      currentUser.paymentMethods.push(newPaymentMethod);
-
-      // Test kullanıcısı için özel kontrol
-      if (userId === TEST_USER.id) {
-        TEST_USER.paymentMethods = currentUser.paymentMethods;
-        updateLocalStorage(TEST_USER);
-        return newPaymentMethod;
+      if (cardData.isDefault) {
+        currentUser.paymentMethods = currentUser.paymentMethods.map(card => ({
+          ...card,
+          isDefault: false
+        }));
       }
 
-      updateLocalStorage(currentUser);
-      return newPaymentMethod;
+      currentUser.paymentMethods.push(newCard);
+      updateUserInStorage(currentUser);
+
+      return newCard;
     } catch (error) {
+      console.error('Ödeme yöntemi eklenirken hata:', error);
       throw error;
     }
   },
 
   // Ödeme yöntemi silme
-  removePaymentMethod: (userId: string, paymentMethodId: string) => {
+  deletePaymentMethod: async (userId: string, cardId: string): Promise<void> => {
     try {
-      const currentUser = authService.getCurrentUser();
-      if (!currentUser) {
-        throw { code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' };
+      const currentUser = getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
       }
 
       if (!currentUser.paymentMethods) {
-        return false;
+        throw new Error('Ödeme yöntemi bulunamadı');
       }
 
-      const methodIndex = currentUser.paymentMethods.findIndex(
-        (m: PaymentMethod) => m.id === paymentMethodId
-      );
+      currentUser.paymentMethods = currentUser.paymentMethods.filter(card => card.id !== cardId);
+      updateUserInStorage(currentUser);
+    } catch (error) {
+      console.error('Ödeme yöntemi silinirken hata:', error);
+      throw error;
+    }
+  },
 
-      if (methodIndex === -1) {
-        throw { code: 'PAYMENT_METHOD_NOT_FOUND', message: 'Ödeme yöntemi bulunamadı' };
+  // Ödeme yöntemlerini getirme
+  getPaymentMethods: async (userId: string): Promise<PaymentMethod[]> => {
+    try {
+      const currentUser = getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+      return currentUser.paymentMethods || [];
+    } catch (error) {
+      console.error('Ödeme yöntemleri getirilirken hata:', error);
+      throw error;
+    }
+  },
+
+  // Ödeme yöntemi güncelleme
+  updatePaymentMethod: async (userId: string, cardId: string, updates: Partial<PaymentMethod>): Promise<PaymentMethod> => {
+    try {
+      const currentUser = getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
       }
 
-      currentUser.paymentMethods.splice(methodIndex, 1);
-
-      // Test kullanıcısı için özel kontrol
-      if (userId === TEST_USER.id) {
-        TEST_USER.paymentMethods = currentUser.paymentMethods;
-        updateLocalStorage(TEST_USER);
-        return true;
+      if (!currentUser.paymentMethods) {
+        throw new Error('Ödeme yöntemi bulunamadı');
       }
 
-      updateLocalStorage(currentUser);
-      return true;
+      const updatedCards = currentUser.paymentMethods.map(card => {
+        if (card.id === cardId) {
+          return { ...card, ...updates };
+        }
+        if (updates.isDefault) {
+          return { ...card, isDefault: false };
+        }
+        return card;
+      });
+
+      currentUser.paymentMethods = updatedCards;
+      updateUserInStorage(currentUser);
+
+      const updatedCard = updatedCards.find(card => card.id === cardId);
+      if (!updatedCard) {
+        throw new Error('Kart bulunamadı');
+      }
+
+      return updatedCard;
+    } catch (error) {
+      console.error('Ödeme yöntemi güncellenirken hata:', error);
+      throw error;
+    }
+  },
+
+  // Kullanıcı ayarlarını güncelleme
+  updateUserSettings: async (userId: string, settings: any) => {
+    try {
+      const currentUser = await getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
+      }
+
+      const updatedUser = await updateUserSettings(userId, settings);
+      if (!updatedUser) {
+        throw new Error('Ayarlar güncellenirken bir hata oluştu');
+      }
+
+      return updatedUser;
     } catch (error) {
       throw error;
     }
   },
 
-  // Rezervasyon iptal etme
-  cancelReservation: (userId: string, reservationId: string) => {
+  // Kullanıcı rezervasyonunu iptal etme
+  cancelReservation: async (userId: string, reservationId: string) => {
+    const currentUser = authService.getCurrentUser();
+    if (!currentUser) throw new Error('Kullanıcı bulunamadı');
+    const updatedReservations = (currentUser.reservations || []).map(res =>
+      res.id === reservationId ? { ...res, status: 'cancelled' as const } : res
+    );
+    currentUser.reservations = updatedReservations;
+    localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    return updatedReservations;
+  },
+
+  // Otel detaylarını ID'ler ile çek
+  getSavedHotels: async (userId: string): Promise<BaseHotel[]> => {
     try {
-      const currentUser = authService.getCurrentUser();
-      if (!currentUser) {
-        throw { code: 'USER_NOT_FOUND', message: 'Kullanıcı bulunamadı' };
+      const currentUser = getUserFromStorage();
+      if (!currentUser || currentUser.id !== userId) {
+        throw new Error('Kullanıcı oturumu bulunamadı');
       }
-
-      if (!currentUser.reservations) {
-        throw { code: 'NO_RESERVATIONS', message: 'Rezervasyon bulunamadı' };
-      }
-
-      const reservationIndex = currentUser.reservations.findIndex(
-        (r: Reservation) => r.id === reservationId
-      );
-
-      if (reservationIndex === -1) {
-        throw { code: 'RESERVATION_NOT_FOUND', message: 'Rezervasyon bulunamadı' };
-      }
-
-      currentUser.reservations[reservationIndex].status = 'cancelled';
-
-      // Test kullanıcısı için özel kontrol
-      if (userId === TEST_USER.id) {
-        TEST_USER.reservations = currentUser.reservations;
-        updateLocalStorage(TEST_USER);
-        return currentUser.reservations[reservationIndex];
-      }
-
-      updateLocalStorage(currentUser);
-      return currentUser.reservations[reservationIndex];
+      const savedHotels = hotelService.getHotelsByIds(currentUser.savedHotels || []);
+      return savedHotels;
     } catch (error) {
+      console.error('Kaydedilen oteller getirilirken hata:', error);
       throw error;
     }
   }

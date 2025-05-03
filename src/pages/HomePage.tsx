@@ -88,21 +88,21 @@ const HomePage: React.FC = () => {
                 image: "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
                 name: "Lüks Okyanus Tatil Köyü",
                 location: "Miami, FL",
-                price: "$299",
+                price: "₺299",
                 rating: 4.8
               },
               {
                 image: "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
                 name: "Dağ Manzaralı Konak",
                 location: "Aspen, CO",
-                price: "$199",
+                price: "₺199",
                 rating: 4.6
               },
               {
                 image: "https://images.pexels.com/photos/2869215/pexels-photo-2869215.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
                 name: "Şehir Butik Oteli",
                 location: "New York, NY",
-                price: "$249",
+                price: "₺249",
                 rating: 4.7
               }
             ].map((hotel, index) => (
