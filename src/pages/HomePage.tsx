@@ -2,6 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Calendar, CreditCard, MapPin, Star } from 'lucide-react';
 import SearchForm from '../components/SearchForm';
+import { turkishHotels } from '../components/TurkishHotels';
 
 const HomePage: React.FC = () => {
   return (
@@ -83,29 +84,7 @@ const HomePage: React.FC = () => {
           </h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {[
-              {
-                image: "https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                name: "Lüks Okyanus Tatil Köyü",
-                location: "Miami, FL",
-                price: "₺299",
-                rating: 4.8
-              },
-              {
-                image: "https://images.pexels.com/photos/261102/pexels-photo-261102.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                name: "Dağ Manzaralı Konak",
-                location: "Aspen, CO",
-                price: "₺199",
-                rating: 4.6
-              },
-              {
-                image: "https://images.pexels.com/photos/2869215/pexels-photo-2869215.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                name: "Şehir Butik Oteli",
-                location: "New York, NY",
-                price: "₺249",
-                rating: 4.7
-              }
-            ].map((hotel, index) => (
+            {turkishHotels.slice(0, 3).map((hotel, index) => (
               <div key={index} className="card overflow-hidden group">
                 <div className="relative h-64 overflow-hidden">
                   <img 
@@ -126,10 +105,10 @@ const HomePage: React.FC = () => {
                   <h3 className="text-xl font-semibold mb-3">{hotel.name}</h3>
                   <div className="flex justify-between items-center">
                     <div>
-                      <span className="text-2xl font-bold text-blue-600">{hotel.price}</span>
+                      <span className="text-2xl font-bold text-blue-600">₺{hotel.price}</span>
                       <span className="text-gray-500 ml-1">gecelik</span>
                     </div>
-                    <Link to={`/hotels/${index + 1}`} className="btn btn-primary">
+                    <Link to={`/hotels/${hotel.id}`} className="btn btn-primary">
                       Detayları Görüntüle
                     </Link>
                   </div>
@@ -178,19 +157,19 @@ const HomePage: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {[
               {
-                name: "Emma Thompson",
-                photo: "https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                text: "Odam Hazır otel bulmayı ve rezervasyon yapmayı çok kolay hale getirdi. Fiyatlar diğer sitelere göre daha iyiydi ve rezervasyonumu değiştirmem gerektiğinde müşteri hizmetleri mükemmeldi."
+                name: "Ahmet Yılmaz",
+                photo: "https://randomuser.me/api/portraits/men/32.jpg",
+                text: "Odam Hazır ile rezervasyon yapmak çok kolaydı. Otel ve hizmetler beklentimin üzerindeydi. Kesinlikle tekrar kullanacağım."
               },
               {
-                name: "Michael Johnson",
-                photo: "https://images.pexels.com/photos/220453/pexels-photo-220453.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                text: "Odam Hazır'ı hem iş hem de tatil seyahatlerim için kullandım. Arayüz temiz ve sezgisel, filtreleme ve tam olarak ihtiyacım olanı bulmayı kolaylaştırıyor. Şiddetle tavsiye ederim!"
+                name: "Ayşe Kaya",
+                photo: "https://randomuser.me/api/portraits/women/44.jpg",
+                text: "Fiyatlar çok uygun ve müşteri hizmetleri çok ilgiliydi. Herkese tavsiye ederim!"
               },
               {
-                name: "Sophia Martinez",
-                photo: "https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=1260&h=750&dpr=2",
-                text: "Ücretsiz iptal seçeneği, belirsiz zamanlarda rezervasyon yaparken bana huzur verdi. Ve iptal etmem gerektiğinde, süreç sorunsuzdu. Odam Hazır'ı kesinlikle tekrar kullanacağım."
+                name: "Mehmet Demir",
+                photo: "https://randomuser.me/api/portraits/men/65.jpg",
+                text: "Otel seçenekleri çok çeşitli ve güvenli ödeme sistemi sayesinde içim rahat. Çok memnun kaldım."
               }
             ].map((testimonial, index) => (
               <div key={index} className="bg-white p-8 rounded-lg shadow-md">
